@@ -1,6 +1,6 @@
 # Лабораторна робота №1 Шульга Є.К. ІО-71, №30 за списком
 
-time_table = [
+input_data = [
                 1566, 984, 502, 6, 802, 823, 68, 2671, 1468,
                 2162, 615, 1405, 1146, 79, 192, 1005, 777,
                 756, 4531, 1554, 698, 279, 75, 484, 745,
@@ -13,64 +13,47 @@ time_table = [
                 1609, 962, 1811, 294, 4187, 157, 76, 1420,
                 1926, 493, 1763, 977, 897, 2497, 841, 1143,
                 345, 236, 233, 448, 1429, 900, 1751, 566]
-                    
+
 gamma = 0.63
-t1 = 433
-t2 = 1073
-ten_intervals = []
-stat_densities = []
-P_list = []
+workWithoutFailsTimeParam = 433
+intensivityTimeParam = 1073
 
-sorted_table = sorted(time_table)
-int_len = 0
+sorted_table = sorted(input_data)
 
-def count_T(gamma):
+print("Средняя наработка до отказа Tср:", sum(sorted_table) / len(sorted_table))
 
-    global int_len, stat_densities, ten_intervals, P_list
-    int_len = (sorted_table[-1] - sorted_table[0]) / 10
-    for i in range(0, 10):
-        ten_intervals.append([a for a in sorted_table if (i * int_len <= a <= (i + 1) * int_len)])
-    stat_densities = [len(interval) / (len(sorted_table) * int_len) for interval in ten_intervals]
-    area_sum = 1
-    for i in range(10):
-        P_list.append(area_sum)
-        area_sum -= stat_densities[i] * int_len
-    gamma = 0.63
-    p_less = max([p for p in P_list if p < gamma])
-    p_more = min([p for p in P_list if p > gamma])
-    index_less = P_list.index(p_less)
-    index_more = P_list.index(p_more)
-    d = (p_more - gamma) / (p_more - p_less)
-    T = index_more + int_len * d
-    return T
+k = 10
+intervals_length = (sorted_table[-1] - sorted_table[0]) / k
 
+intervals = []
+for i in range(k):
+    intervals.append([a for a in sorted_table if (a >= i * intervals_length and a < (i + 1) * intervals_length)])
 
-def faultlessness_probability(time):
-    
-    time = 433
-    Sum = 1
-    whole_intervals = int(time // int_len)
-    for i in range(whole_intervals):
-        Sum -= stat_densities[i] * int_len
-    Sum -= stat_densities[whole_intervals] * (time % int_len)
-    return Sum
+f = [len(interval) / (len(sorted_table) * intervals_length) for interval in intervals]
 
-def count_Tcp():
-    
-    return sum(time_table) / len(time_table)
+p_list = []
+area = 1
+for i in range(k):
+    p_list.append(area)
+    area -= f[i] * intervals_length
 
-def fail_freq(time):
-    
-    f = stat_densities[int(time // int_len)]
-    p = faultlessness_probability(time)
-    return f / p
+p_min = max([p for p in p_list if p < gamma])
+p_max = min([p for p in p_list if p > gamma])
 
+print("γ-процентная наработка на отках Tγ при γ = 0.63:", intervals_length - intervals_length * (p_min - gamma) / (p_min - p_max))
 
+probability_of_unfail = 1
+whole = int(workWithoutFailsTimeParam // intervals_length)
+for i in range(whole):
+    probability_of_unfail -= f[i] * intervals_length
+probability_of_unfail -= f[whole] * (workWithoutFailsTimeParam % intervals_length)
 
-print("Tср:", count_Tcp())
+print("Вероятность безотказной работи на время 433 часов:", probability_of_unfail)
 
-print("Tγ:", count_T(gamma))
+probability_of_unfail = 1
+whole = int(workWithoutFailsTimeParam // intervals_length)
+for i in range(whole):
+    probability_of_unfail -= f[i] * intervals_length
+probability_of_unfail -= f[whole] * (workWithoutFailsTimeParam % intervals_length)
 
-print("Вероятность безотказной работы:", faultlessness_probability(t1))
-
-print("Интенсивность отказов:", fail_freq(t2))
+print("Интенсивность отказoв на время 1073 часов:", f[int(intensivityTimeParam // intervals_length)] / probability_of_unfail)
